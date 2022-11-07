@@ -9,6 +9,7 @@ use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class OrderController extends BaseController
 {
@@ -69,6 +70,7 @@ class OrderController extends BaseController
 
             return $this->generateData($user, $this->schemas);
         } catch (Exception $ex) {
+            Log::error($ex->getMessage());
         }
     }
 

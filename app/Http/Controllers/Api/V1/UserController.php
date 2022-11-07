@@ -9,6 +9,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends BaseController
 {
@@ -16,6 +17,10 @@ class UserController extends BaseController
     public $schemas = [
         \App\Models\User::class => \App\Http\Schemas\UserSchema::class,
         \App\Models\Order::class => \App\Http\Schemas\OrderSchema::class,
+    ];
+
+    public $includedPaths = [
+        'orders'
     ];
 
     /**
@@ -56,7 +61,7 @@ class UserController extends BaseController
             ]);
 
             $user->assignRole($request['role']);
-            return $this->generateData($user, $this->schemas);
+            return $this->generateData($user, $this->schemas, $this->includedPaths);
         } catch (Exception $ex) {
         }
     }
@@ -110,7 +115,7 @@ class UserController extends BaseController
     {
         try {
             $user = User::find(Auth::user()->id);
-            return $this->generateData($user, $this->schemas);
+            return $this->generateData($user, $this->schemas, $this->includedPaths);
         } catch (Exception $ex) {
         }
     }
@@ -124,7 +129,7 @@ class UserController extends BaseController
             $user->addMoney($request['wallet']);
             return $this->generateData($user, $this->schemas);
         } catch (Exception $ex) {
-            dd($ex);
+            Log::error($ex->getMessage());
         }
     }
 }

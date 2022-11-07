@@ -23,6 +23,7 @@ class UserSchema extends BaseSchema
         return [
             'name' => $user->name,
             'email'  => $user->email,
+            'wallet' => $user->wallet,
         ];
     }
 

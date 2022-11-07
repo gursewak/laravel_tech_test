@@ -23,7 +23,8 @@ class OrderSchema extends BaseSchema
         return [
             'orderedOn' => $order->ordered_on->diffForHumans(),
             'status'  => $order->status,
-            'discount' => $order->discount
+            'discount' => $order->discount,
+            'amount' => $order->details()->sum('price')
         ];
     }
 
