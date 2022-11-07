@@ -3,6 +3,8 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -22,6 +24,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'wallet',
     ];
 
 
@@ -46,4 +49,44 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    public function addMoney($amount)
+    {
+        $this->wallet += $amount;
+        return $this->save();
+    }
+
+    public function hasAmount($amount)
+    {
+        return $this->wallet >= $amount;
+    }
+
+    public function deductAmount($amount)
+    {
+        $this->wallet -= $amount;
+        $this->save();
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class, 'ordered_by');
+    }
+
+    public function placeOrder($products)
+    {
+        $order = $this->orders()->create([
+            'ordered_on' => Carbon::now(),
+            'status' => Order::PENDING
+        ]);
+
+        $products->each(function ($product) use ($order) {
+            $order->details()->create([
+                'order_id' => $order->id,
+                'product_id' => $product->id,
+                'price' => $product->price
+            ]);
+        });
+
+        $this->deductAmount($products->sum('price'));
+    }
 }

@@ -2,21 +2,23 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Http\Requests\UserPriceRequest;
-use App\Http\Requests\UserRequest;
+use App\Http\Requests\PlaceOrderRequest;
+use App\Models\Order;
+use App\Models\Product;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 
-class UserController extends BaseController
+class OrderController extends BaseController
 {
 
+
     public $schemas = [
-        \App\Models\User::class => \App\Http\Schemas\UserSchema::class,
         \App\Models\Order::class => \App\Http\Schemas\OrderSchema::class,
+        \App\Models\User::class => \App\Http\Schemas\UserSchema::class
     ];
+
 
     /**
      * Display a listing of the resource.
@@ -44,18 +46,27 @@ class UserController extends BaseController
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(UserRequest $request)
+    public function store(PlaceOrderRequest $request)
     {
         try {
             $request->validated();
+            $products = Product::whereIn('id', $request['productIds'])->get();
+            if ($products->isEmpty()) {
+                return response()->json([
+                    'message' => 'Product Not Exists!'
+                ]);
+            }
+            $totalAmount = $products->sum('price');
+            $user = User::find(Auth::user()->id);
 
-            $user = User::create([
-                'name' => $request['name'],
-                'email' => $request['email'],
-                'password' => Hash::make($request['password'])
-            ]);
+            if ($user->hasAmount($totalAmount)) {
+                $user->placeOrder($products);
+            } else {
+                return response()->json([
+                    'message' => 'Wallet has not sufficient Balance'
+                ]);
+            }
 
-            $user->assignRole($request['role']);
             return $this->generateData($user, $this->schemas);
         } catch (Exception $ex) {
         }
@@ -69,7 +80,8 @@ class UserController extends BaseController
      */
     public function show($id)
     {
-        //
+        $order = Order::find($id);
+        return $this->generateData($order, $this->schemas);
     }
 
     /**
@@ -104,27 +116,5 @@ class UserController extends BaseController
     public function destroy($id)
     {
         //
-    }
-
-    public function me(Request $request)
-    {
-        try {
-            $user = User::find(Auth::user()->id);
-            return $this->generateData($user, $this->schemas);
-        } catch (Exception $ex) {
-        }
-    }
-
-    public function addMoney(UserPriceRequest $request)
-    {
-        try {
-            $request->validated();
-            $userId = Auth::user()->id;
-            $user = User::find($userId);
-            $user->addMoney($request['wallet']);
-            return $this->generateData($user, $this->schemas);
-        } catch (Exception $ex) {
-            dd($ex);
-        }
     }
 }

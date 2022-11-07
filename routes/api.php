@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Api\V1\OrderController;
+use App\Http\Controllers\Api\V1\ProductController;
+use App\Http\Controllers\Api\V1\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -14,15 +17,30 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::prefix('users')->group(function () {
-    // Route::post('register', )
+
+Route::prefix('v1')->group(function () {
+
+    Route::prefix('products')->group(function () {
+        Route::get('list', [ProductController::class, 'index']);
+        Route::get('show/{id}', [ProductController::class, 'show']);
+    });
+
+    Route::prefix('users')->group(function () {
+        Route::post('register', [UserController::class, 'store']);
+    });
 
 
-});
 
 
+    Route::middleware('auth:api')->group(function () {
+        Route::get('/me', [UserController::class, 'me']);
+        Route::prefix('users')->group(function () {
+            Route::post('add-money', [UserController::class, 'addMoney']);
+        });
 
-
-Route::middleware('auth:api')->get('/user', function (Request $request) {
-    return $request->user();
+        Route::prefix('orders')->group(function () {
+            Route::get('/{id}', [OrderController::class, 'show']);
+            Route::post('place', [OrderController::class, 'store']);
+        });
+    });
 });

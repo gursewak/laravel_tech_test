@@ -8,4 +8,19 @@ use Illuminate\Database\Eloquent\Model;
 class Order extends Model
 {
     use HasFactory;
+
+    protected $guarded = [];
+
+    protected $casts = [
+        'ordered_on' => 'date'
+    ];
+
+    public const PENDING = 'pending';
+
+
+    public function details()
+    {
+
+        return $this->hasMany(OrderDetails::class, 'order_id');
+    }
 }

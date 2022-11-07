@@ -2,20 +2,15 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Http\Requests\UserPriceRequest;
-use App\Http\Requests\UserRequest;
-use App\Models\User;
+use App\Models\Product;
 use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 
-class UserController extends BaseController
+class ProductController extends BaseController
 {
 
     public $schemas = [
-        \App\Models\User::class => \App\Http\Schemas\UserSchema::class,
-        \App\Models\Order::class => \App\Http\Schemas\OrderSchema::class,
+        \App\Models\Product::class => \App\Http\Schemas\ProductSchema::class
     ];
 
     /**
@@ -25,7 +20,9 @@ class UserController extends BaseController
      */
     public function index()
     {
-        //
+        $products = Product::paginate();
+
+        return $this->generateData($products, $this->schemas);
     }
 
     /**
@@ -44,21 +41,9 @@ class UserController extends BaseController
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(UserRequest $request)
+    public function store(Request $request)
     {
-        try {
-            $request->validated();
-
-            $user = User::create([
-                'name' => $request['name'],
-                'email' => $request['email'],
-                'password' => Hash::make($request['password'])
-            ]);
-
-            $user->assignRole($request['role']);
-            return $this->generateData($user, $this->schemas);
-        } catch (Exception $ex) {
-        }
+        //
     }
 
     /**
@@ -69,7 +54,11 @@ class UserController extends BaseController
      */
     public function show($id)
     {
-        //
+        try {
+            $product = Product::find($id);
+            return $this->generateData($product, $this->schemas);
+        } catch (Exception $ex) {
+        }
     }
 
     /**
@@ -104,27 +93,5 @@ class UserController extends BaseController
     public function destroy($id)
     {
         //
-    }
-
-    public function me(Request $request)
-    {
-        try {
-            $user = User::find(Auth::user()->id);
-            return $this->generateData($user, $this->schemas);
-        } catch (Exception $ex) {
-        }
-    }
-
-    public function addMoney(UserPriceRequest $request)
-    {
-        try {
-            $request->validated();
-            $userId = Auth::user()->id;
-            $user = User::find($userId);
-            $user->addMoney($request['wallet']);
-            return $this->generateData($user, $this->schemas);
-        } catch (Exception $ex) {
-            dd($ex);
-        }
     }
 }
